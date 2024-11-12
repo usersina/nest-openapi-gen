@@ -11,6 +11,10 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
+    "paths": {
+      "nest-openapi-gen": ["../../dist"],
+      "nest-openapi-gen/*": ["../../dist/*"]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
