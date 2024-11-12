@@ -1,10 +1,11 @@
-import { EnumMember, ParameterDeclaration, PropertyDeclaration, PropertySignature, StringLiteral, SymbolFlags, Type } from "ts-morph";
-import { isPrimitive } from "./typescript";
-import { OpenAPIV3 } from "openapi-types";
 import { last, merge } from "lodash";
+import { OpenAPIV3 } from "openapi-types";
+import { EnumMember, ParameterDeclaration, PropertyDeclaration, PropertySignature, StringLiteral, SymbolFlags, Type } from "ts-morph";
 import { getCustomValidation } from "./decorators";
+import { isPrimitive } from "./typescript";
 
 export const definitions = {};
+const visitedTypes = new Set<string>();
 
 export function getResponseObject(responseType?: Type): OpenAPIV3.ResponseObject {
   if (!responseType) return { description: "ok" };
@@ -126,6 +127,12 @@ export function getContentType(type: Type) {
 }
 
 const getObjectSchema = (type: Type): OpenAPIV3.NonArraySchemaObject & { optional?: boolean } => {
+  const typeName = type.getText();
+  if (visitedTypes.has(typeName)) {
+    return { type: "object", properties: {} };
+  }
+  visitedTypes.add(typeName);
+
   const schema: OpenAPIV3.NonArraySchemaObject & { optional?: boolean } = { type: "object", properties: {}, required: [] };
   type.getProperties().forEach((prop) => {
     const isGetter = prop.hasFlags(SymbolFlags.GetAccessor);
@@ -142,8 +149,11 @@ const getObjectSchema = (type: Type): OpenAPIV3.NonArraySchemaObject & { optiona
     }
   });
   if (!schema.required?.length) delete schema.required;
+
+  visitedTypes.delete(typeName);
   return schema;
 };
+
 const getTypeString = (type: Type, useRef: boolean) => {
   const typeText = type.getText();
   if (type.isArray()) return "array";

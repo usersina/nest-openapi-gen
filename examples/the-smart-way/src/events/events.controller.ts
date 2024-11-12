@@ -1,10 +1,15 @@
 import { Controller, Get, Param, Query } from "@nestjs/common";
-import { Min, Uuid } from "nest-openapi-gen/decorators";
+import { Min } from "nest-openapi-gen/decorators";
+
 interface Event {
-  timestamp: number;
-  type: EventType;
-  locationId: number;
   id: number;
+  type: EventType;
+  timestamp: number;
+  locationId: number;
+  canBeUndefined?: string;
+  canBeNull: string | null;
+  nullableEvent: Event | null;
+  nonNullableEvents: Event[];
 }
 
 enum EventType {

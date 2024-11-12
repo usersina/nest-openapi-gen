@@ -1,1 +1,49 @@
-{"openapi":"3.0.0","info":{"title":"the-smart-way","version":"0.0.1","description":""},"paths":{"/app":{"get":{"tags":["App"],"responses":{"200":{"content":{"text/plain":{"schema":{"type":"string"}}},"description":"ok"}},"parameters":[]}},"/events/{locationId}":{"get":{"tags":["Events"],"responses":{"200":{"content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Event"}}}},"description":"ok"}},"parameters":[{"in":"path","name":"locationId","required":true,"schema":{"type":"number","minimum":100}},{"in":"query","name":"ids","required":false,"schema":{"minLength":2,"type":"array","items":{"type":"number"}}},{"in":"query","name":"type","required":false,"schema":{"$ref":"#/components/schemas/EventType"}}]}}},"components":{"schemas":{"EventType":{"enum":["system","user"],"x-enumNames":["SYSTEM","USER"],"type":"string"},"Event":{"type":"object","properties":{"timestamp":{"type":"number"},"type":{"$ref":"#/components/schemas/EventType"},"locationId":{"type":"number"},"id":{"type":"number"}},"required":["timestamp","type","locationId","id"]}}},"tags":[{"name":"App"},{"name":"Events"}]}
+{
+  "openapi": "3.0.0",
+  "info": { "title": "the-smart-way", "version": "0.0.1", "description": "" },
+  "paths": {
+    "/app": {
+      "get": {
+        "tags": ["App"],
+        "responses": { "200": { "content": { "text/plain": { "schema": { "type": "string" } } }, "description": "ok" } },
+        "parameters": []
+      }
+    },
+    "/events/{locationId}": {
+      "get": {
+        "tags": ["Events"],
+        "responses": {
+          "200": {
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Event" } } } },
+            "description": "ok"
+          }
+        },
+        "parameters": [
+          { "in": "path", "name": "locationId", "required": true, "schema": { "type": "number", "minimum": 100 } },
+          { "in": "query", "name": "ids", "required": false, "schema": { "minLength": 2, "type": "array", "items": { "type": "number" } } },
+          { "in": "query", "name": "type", "required": false, "schema": { "$ref": "#/components/schemas/EventType" } }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EventType": { "enum": ["system", "user"], "x-enumNames": ["SYSTEM", "USER"], "type": "string" },
+      "Event": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "type": { "$ref": "#/components/schemas/EventType" },
+          "timestamp": { "type": "number" },
+          "locationId": { "type": "number" },
+          "canBeUndefined": { "type": "string" },
+          "canBeNull": { "type": "string" },
+          "nullableEvent": { "$ref": "#/components/schemas/Event" },
+          "nonNullableEvents": { "type": "array", "items": { "$ref": "#/components/schemas/Event" } }
+        },
+        "required": ["id", "type", "timestamp", "locationId", "canBeNull", "nullableEvent", "nonNullableEvents"]
+      }
+    }
+  },
+  "tags": [{ "name": "App" }, { "name": "Events" }]
+}
