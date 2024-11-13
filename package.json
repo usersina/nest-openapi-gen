@@ -17,18 +17,19 @@
     "clean": "rm -rf dist/ && rm -rf coverage/",
     "prebuild": "npm run clean",
     "build": "tsc --p tsconfig.build.json",
-    "watch": "tsc -w --p tsconfig.build.json",
+    "build:watch": "tsc -w --p tsconfig.build.json",
     "test": "cd ./test && npm run test",
     "start": "ts-node ./src/server/tests/app.ts",
     "pretest": "npm run lint",
     "install-test": "cd ./test && npm i",
     "lint": "eslint 'src/**/*.ts' --fix",
     "copy-files": "cp package.json ./dist/package.json & cp README.md ./dist/README.md",
-    "publishh": "npm run build && npm version patch --force && npm run copy-files && cd dist && npm publish && cd ../ && npm run clean"
+    "publish": "npm run build && npm version patch --force && npm run copy-files && cd dist && npm publish && cd ../ && npm run clean"
   },
   "author": "yantrab@gmail.com",
   "license": "MIT",
   "dependencies": {
+    "concurrently": "^9.1.0",
     "lodash": "^4.17.21",
     "ts-morph": "^10.0.2"
   },

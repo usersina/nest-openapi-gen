@@ -1,26 +1,32 @@
 # nest-openapi-gen
-Generate openapi document from nest controller
+
+Automatically generate OpenAPI documentation from your NestJS controllers without overhead.
 
 ## Problem 😕
 
-You already defined your controllers with typescript, and you don't want to write it again in the open API document, or add @ApiProperty() decorator anywhere
+You already defined your controllers with typescript, and you don't want to write it again in the open API document, or add the `@ApiProperty()` decorator anywhere.
 
 ## Solution 😄
 
 This package can generate the openapi document without adding any code or decorators.
+
 ## Usage
 
-#### Install
-```npm i -D nest-openapi-gen```
+### Install
 
-#### Generate
+`npm i -D nest-openapi-gen`
+
+### Generate
+
 ```typescript
-import { generate } from 'nest-openapi-gen';
-generate({ prefix:'/api' });
+import { generate } from "nest-openapi-gen";
+generate({ prefix: "/api" });
 ```
+
 This will generate openapi.schema.json file in the root folder.
 
-#### Options
+### Options
+
 - prefix - global prefix
 - filePath - The path to the generated file
 - tsConfigFilePath - tsconfig.json file path. default - [root].tsconfig.json
@@ -28,6 +34,7 @@ This will generate openapi.schema.json file in the root folder.
 ### Decorators
 
 #### Validation decorators
+
 - Min
 - Max
 - Pattern
@@ -47,7 +54,9 @@ This will generate openapi.schema.json file in the root folder.
 - JsonPointer
 - RelativeJsonPointer
 - NumberString
+
 examples
+
 ```typescript
 class FormatClass {
   @Uuid uuid: string;
@@ -73,7 +82,9 @@ export class App3Controller {
 ```
 
 #### Schema decorator
-you can set openapi schema by using Schema decorator.
+
+You can set openapi schema by using Schema decorator.
+
 ```typescript
   @Post("schema/:mail")
   schema(
@@ -81,9 +92,13 @@ you can set openapi schema by using Schema decorator.
     @Query() @Schema({ properties: { someInt: { type: "integer" } } }) query: SomeInterfaceWithInt
   ) {}
 ```
+
 ## Big advantage
+
 Now that we have openapi doc, we can use [express-openapi-validator](https://www.npmjs.com/package/express-openapi-validator) instead of class-validator.
+
 This ugly code:
+
 ```typescript
 export class GetEventsTimelineParams {
   // eslint-disable-next-line no-restricted-syntax
@@ -99,16 +114,15 @@ export class GetEventsTimelineQuery {
   @IsNumber() startTime!: number;
   @IsNumber() @IsOptional() endTime?: number;
 }
-@Controller(':projectName/event-timeline')
+@Controller(":projectName/event-timeline")
 export class EventTimelineController {
   @Get(":storeId")
-  getEventTimeline(@Param() params: GetEventsTimelineParams,
-                   @Query() query: GetEventsTimelineQuery): Promise<ActivityTimeline[]> {
-  }
+  getEventTimeline(@Param() params: GetEventsTimelineParams, @Query() query: GetEventsTimelineQuery): Promise<ActivityTimeline[]> {}
 }
 ```
 
-Became to :
+Becomes this:
+
 ```typescript
 export interface GetEventsTimelineQuery {
   uuid: string;
@@ -116,22 +130,39 @@ export interface GetEventsTimelineQuery {
   endTime?: number;
 }
 
-@Controller(':projectName/event-timeline')
+@Controller(":projectName/event-timeline")
 export class EventTimelineController {
   @Get(":storeId")
-  getEventTimeline(@Param('projectName') projectName: string,
-                   @Param('storeId') storeId: number,
-                   @Query() query: GetEventsTimelineQuery): Promise<ActivityTimeline[]> {
-  }
+  getEventTimeline(
+    @Param("projectName") projectName: string,
+    @Param("storeId") storeId: number,
+    @Query() query: GetEventsTimelineQuery
+  ): Promise<ActivityTimeline[]> {}
 }
 ```
 
+## Development
+
+It is best that you directly see the changes in a live project when working on this package.
+To do that, you have to build this package whenever you make changes to it.
+For the local development, youse the `examples/the-smart-way` project to see the changes to your specifications.
+
+This can be done by running the following commands: (paths are specified to the left of each command)
+
+- `(nest-openapi-gen) $ npm run build:watch` - watch this package's build
+- `(nest-openapi-gen/examples/the-smart-way) $ npm run start:dev:package` - start the main project with auto-restart
+
+You can then access `http://localhost:3000/docs` to see the changes in Swagger UI.
+
 ## TODO
-- ci/cd
-- cli commands
-- Multiple responses
-- support files in response and request body
+
+- [ ] Add [nullable](https://swagger.io/docs/specification/v3_0/data-models/data-types/#null) support
+- [ ] Implement CI/CD pipeline
+- [ ] Create CLI commands
+- [ ] Handle multiple response types
+- [ ] Support file uploads in requests and responses
+- [ ] Add additional decorators
 
 ## Dependencies
-- [ts-morph](https://www.npmjs.com/package/ts-morph) - TypeScript Compiler API wrapper to parse your types to openapi schemas.
 
+- [ts-morph](https://www.npmjs.com/package/ts-morph) - TypeScript Compiler API wrapper to parse your types to openapi schemas.

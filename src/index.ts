@@ -1,13 +1,13 @@
-import { OpenAPIV3 } from "openapi-types";
-import { getPackageInfo } from "./utils/package";
 import { writeFileSync } from "fs";
-import { getControllers, getMethodDetails } from "./utils/typescript";
-import { getControllerPath, getControllerTag } from "./utils/controller";
-import { getOpenapiPath } from "./utils/util";
-import { definitions, getMethodParameters, getResponseObject } from "./utils/openapi";
-import { omitDeepBy } from "./utils/omit-by";
 import { cloneDeep, findIndex, orderBy } from "lodash";
-import { ParameterDeclaration, Type } from "ts-morph";
+import { OpenAPIV3 } from "openapi-types";
+import { Type } from "ts-morph";
+import { getControllerPath, getControllerTag } from "./utils/controller";
+import { omitDeepBy } from "./utils/omit-by";
+import { definitions, getMethodParameters, getResponseObject } from "./utils/openapi";
+import { getPackageInfo } from "./utils/package";
+import { getControllers, getMethodDetails } from "./utils/typescript";
+import { getOpenapiPath } from "./utils/util";
 
 function setMethodSchema(
   schema: OpenAPIV3.Document,
