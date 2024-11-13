@@ -1,11 +1,11 @@
-import { NestFactory } from "@nestjs/core";
-import { AppModule } from "./app.module";
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from "@nestjs/common";
+import { NestFactory } from "@nestjs/core";
+import { SwaggerModule } from "@nestjs/swagger";
 import { Request, Response } from "express";
-import { readFileSync } from "fs";
 import * as OpenApiValidator from "express-openapi-validator";
 import { BadRequest } from "express-openapi-validator/dist/framework/types";
-import { SwaggerModule } from "@nestjs/swagger";
+import { readFileSync } from "fs";
+import { AppModule } from "./app.module";
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -41,7 +41,7 @@ async function bootstrap() {
       ignoreUndocumented: true,
     })
   );
-  SwaggerModule.setup("api", app, document);
+  SwaggerModule.setup("docs", app, document);
   await app.listen(3000);
 }
 bootstrap();
