@@ -1,6 +1,15 @@
 import { last, merge } from "lodash";
 import { OpenAPIV3 } from "openapi-types";
-import { EnumMember, ParameterDeclaration, PropertyDeclaration, PropertySignature, StringLiteral, SymbolFlags, Type } from "ts-morph";
+import {
+  EnumMember,
+  ParameterDeclaration,
+  PropertyDeclaration,
+  PropertySignature,
+  StringLiteral,
+  SymbolFlags,
+  SyntaxKind,
+  Type,
+} from "ts-morph";
 import { getCustomValidation } from "./decorators";
 import { isPrimitive } from "./typescript";
 
@@ -22,7 +31,12 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
     requestBody: undefined,
     parameters: [],
   };
+
   parameters.forEach((parameter) => {
+    const jsDoc = parameter
+      .getChildrenOfKind(SyntaxKind.JSDocComment)
+      .map((doc) => doc.getInnerText())
+      .join("\n");
     parameter
       .getDecorators()
       .filter((d) => ["Body", "Param", "Query", "Headers"].includes(d.getName()))
@@ -40,9 +54,21 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
               schema.properties = schema.properties || {};
               if (propSchema) schema.properties[inputPath] = propSchema as OpenAPIV3.SchemaObject;
               if (!(propSchema as any)?.optional) schema.required = (schema.required || []).concat(inputPath);
+              if (jsDoc) {
+                const propertySchema = schema.properties[inputPath] as OpenAPIV3.SchemaObject;
+                if (propertySchema) {
+                  propertySchema.description = jsDoc;
+                }
+              }
             } else {
               result.requestBody = { content: {} };
               result.requestBody.content[contentType] = { schema: getParamSchema(parameter) };
+              if (jsDoc) {
+                const schema = result.requestBody.content[contentType].schema as OpenAPIV3.SchemaObject;
+                if (schema) {
+                  schema.description = jsDoc;
+                }
+              }
             }
             break;
           }
@@ -54,6 +80,7 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
                 name: inputPath,
                 required: !(paramSchema as any).optional,
                 schema: paramSchema,
+                description: jsDoc,
               } as OpenAPIV3.ParameterObject);
             } else {
               const objectSchema = getParamSchema(parameter, false) as OpenAPIV3.SchemaObject & { optional?: boolean };
@@ -64,6 +91,7 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
                   name: prop,
                   required: !(propSchema as any).optional,
                   schema: propSchema,
+                  description: jsDoc,
                 } as OpenAPIV3.ParameterObject);
               });
             }
@@ -77,6 +105,7 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
                 name: inputPath,
                 required: !(paramSchema as any).optional,
                 schema: paramSchema,
+                description: jsDoc,
               } as OpenAPIV3.ParameterObject);
             } else {
               const paramSchema = getParamSchema(parameter, false) as OpenAPIV3.SchemaObject & { optional?: boolean };
@@ -87,6 +116,7 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
                   name: prop,
                   required: !(propSchema as any).optional,
                   schema: propSchema,
+                  description: jsDoc,
                 } as OpenAPIV3.ParameterObject);
               });
             }
@@ -100,6 +130,7 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
                 name: inputPath,
                 required: !(paramSchema as any).optional,
                 schema: paramSchema,
+                description: jsDoc,
               } as OpenAPIV3.ParameterObject);
             } else {
               const paramSchema = getParamSchema(parameter, false) as OpenAPIV3.SchemaObject & { optional?: boolean };
@@ -110,6 +141,7 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
                   name: prop,
                   required: !(propSchema as any).optional,
                   schema: propSchema,
+                  description: jsDoc,
                 } as OpenAPIV3.ParameterObject);
               });
             }
@@ -118,6 +150,7 @@ export function getMethodParameters(parameters: ParameterDeclaration[]) {
         }
       });
   });
+
   return result;
 }
 
@@ -174,7 +207,31 @@ const getParamSchema = (
   const typeText = type.getText();
   const nonNullableType = type.getNonNullableType();
   const typeString = getTypeString(nonNullableType, useRef);
-  let schema = { optional: nonNullableType.getText() !== typeText || !!prop?.hasQuestionToken() };
+  let schema: any = { optional: nonNullableType.getText() !== typeText || !!prop?.hasQuestionToken() };
+
+  // Extract JSDoc comment
+  let description = "";
+  if (prop) {
+    description = prop
+      .getChildrenOfKind(SyntaxKind.JSDocComment)
+      .map((doc) => doc.getInnerText())
+      .join("\n");
+  } else {
+    const symbol = type.getSymbol();
+    if (symbol) {
+      const declarations = symbol.getDeclarations();
+      if (declarations.length > 0) {
+        description = declarations[0]
+          .getChildrenOfKind(SyntaxKind.JSDocComment)
+          .map((doc) => doc.getInnerText())
+          .join("\n");
+      }
+    }
+  }
+  if (description) {
+    schema.description = description;
+  }
+
   if (prop instanceof PropertyDeclaration || prop instanceof ParameterDeclaration) {
     prop.getDecorators().forEach((decorator) => {
       schema = merge(schema, getCustomValidation(decorator, typeString));
@@ -212,6 +269,9 @@ const getParamSchema = (
       enumSchema.enum = enumMembers.map((m: EnumMember) => m.getName());
       enumSchema["x-enumNames"] = enumMembers.map((m: EnumMember) => m.getValue());
       enumSchema.type = typeof enumSchema.enum[0];
+      if (description) {
+        enumSchema.description = description;
+      }
       definitions[name] = enumSchema;
       return { $ref: "#/components/schemas/" + name, ...schema };
     }
@@ -221,6 +281,24 @@ const getParamSchema = (
       enumSchema.enum = nonNullableType.getUnionTypes().map((t) => t.getLiteralValueOrThrow());
       enumSchema["x-enumNames"] = nonNullableType.getUnionTypes().map((t) => last(t.getText().split(".")) as string);
       enumSchema.type = typeof enumSchema.enum[0];
+      if (description) {
+        enumSchema.description = description;
+      } else {
+        // Extract JSDoc comment for enum
+        const symbol = nonNullableType.getSymbol();
+        if (symbol) {
+          const declarations = symbol.getDeclarations();
+          if (declarations.length > 0) {
+            const enumDescription = declarations[0]
+              .getChildrenOfKind(SyntaxKind.JSDocComment)
+              .map((doc) => doc.getInnerText())
+              .join("\n");
+            if (enumDescription) {
+              enumSchema.description = enumDescription;
+            }
+          }
+        }
+      }
       definitions[name] = enumSchema;
       return { $ref: "#/components/schemas/" + name, ...schema };
     }

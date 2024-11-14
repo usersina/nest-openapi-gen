@@ -14,6 +14,7 @@ function setMethodSchema(
   path: string,
   httpMethodType: string,
   responseType: Type,
+  description: string,
   tag,
   methodParameterSchemas
 ) {
@@ -21,6 +22,7 @@ function setMethodSchema(
   schema.paths[path]![httpMethodType] = {
     tags: [tag.name],
     responses: { 200: getResponseObject(responseType) },
+    description: description,
     ...cloneDeep(methodParameterSchemas),
   };
 }
@@ -47,13 +49,29 @@ export function generate(options?: { prefix?: string; filePath?: string; tsConfi
         (p) => findIndex(path, p.name)
       );
       if (!optionalParams.length)
-        setMethodSchema(schema, path, methodDetails.httpMethodType, methodDetails.responseType, tag, methodParameterSchemas);
+        setMethodSchema(
+          schema,
+          path,
+          methodDetails.httpMethodType,
+          methodDetails.responseType,
+          methodDetails.description,
+          tag,
+          methodParameterSchemas
+        );
       else {
         methodParameterSchemas.parameters = methodParameterSchemas.parameters.filter((p) => p.in !== "path" || p.required);
         optionalParams.forEach((optionalParam) => {
           const partialPath = path.split("/{" + optionalParam.name)[0];
           if (!schema.paths[partialPath])
-            setMethodSchema(schema, partialPath, methodDetails.httpMethodType, methodDetails.responseType, tag, methodParameterSchemas);
+            setMethodSchema(
+              schema,
+              partialPath,
+              methodDetails.httpMethodType,
+              methodDetails.responseType,
+              methodDetails.description,
+              tag,
+              methodParameterSchemas
+            );
           optionalParam.required = true;
           methodParameterSchemas.parameters.push(optionalParam);
           setMethodSchema(
@@ -61,6 +79,7 @@ export function generate(options?: { prefix?: string; filePath?: string; tsConfi
             partialPath + "/{" + optionalParam.name + "}",
             methodDetails.httpMethodType,
             methodDetails.responseType,
+            methodDetails.description,
             tag,
             methodParameterSchemas
           );

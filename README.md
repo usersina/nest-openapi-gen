@@ -166,3 +166,8 @@ You can then access `http://localhost:3000/docs` to see the changes in Swagger U
 ## Dependencies
 
 - [ts-morph](https://www.npmjs.com/package/ts-morph) - TypeScript Compiler API wrapper to parse your types to openapi schemas.
+
+## References
+
+- [Swagger Editor](https://editor.swagger.io/)
+- OpenAPI [specification](https://swagger.io/specification/)
